@@ -19,7 +19,9 @@ jobs:
             -e PYTHONPATH=/app \
             -v ${{ github.workspace }}/coverage:/app/coverage \
             fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-unit.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_unit.py
-          mv /app/.coverage /app/coverage/.coverage.unit
+          docker run --rm \
+            -v ${{ github.workspace }}/coverage:/app/coverage \
+            fastapi-app mv /app/.coverage /app/coverage/.coverage.unit
 
       - name: Upload Unit Test Coverage Artifact
         uses: actions/upload-artifact@v4
@@ -55,10 +57,13 @@ jobs:
       - name: Run Acceptance Tests with Coverage
         run: |
           docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_acceptance.py
-          mv /app/.coverage /app/coverage/.coverage.acceptance
+          docker run --rm \
+            -v ${{ github.workspace }}/coverage:/app/coverage \
+            fastapi-app mv /app/.coverage /app/coverage/.coverage.acceptance
 
       - name: Combine Coverage Reports
         run: |
+          ls -l ${{ github.workspace }}/coverage  # Ensure coverage files exist
           docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage combine /app/coverage/.coverage.unit /app/coverage/.coverage.acceptance
           docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage xml -o /app/coverage/coverage.xml
 
