@@ -13,6 +13,7 @@ jobs:
   unit-tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,21 +24,33 @@ jobs:
       - name: Build Docker image
         run: docker build -t fastapi-app .
 
-      - name: Run Unit Tests with Coverage
+      - name: Run Unit Tests inside Docker with coverage
         run: |
-          mkdir -p coverage/  # Create a directory on the host for coverage files
-          docker run --rm --network host -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-unit.xml --cov-report=html:/app/coverage/html tests/test_unit.py
+          docker run --rm \
+            -e PYTHONPATH=/app \
+            -v ${{ github.workspace }}/coverage:/app/coverage \
+            fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage.xml --cov-report=html:/app/coverage/html tests/test_unit.py
 
-      - name: Upload Unit Test Coverage Report as Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Coverage Report to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: /app/coverage/coverage.xml  # Path to coverage report
+          flags: unittests  # Optional flag to label this report in Codecov
+          name: unit-test-coverage-report  # Name for the Codecov report
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the token in GitHub Secrets
+
+      - name: Publish Coverage Report as an Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage-report
-          path: coverage/  # Upload the entire coverage directory
+          path: ./coverage/html/  # Upload the entire HTML coverage report
 
   acceptance-tests:
     name: Run Acceptance Tests
     runs-on: ubuntu-latest
-    needs: unit-tests  # This ensures that unit-tests must finish before acceptance-tests starts
+    needs: unit-tests  # Make sure this job waits for unit-tests to complete
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -58,16 +71,15 @@ jobs:
             sleep 5
           done
 
-      - name: Download Unit Test Coverage Report
-        uses: actions/download-artifact@v3
-        with:
-          name: unit-test-coverage-report  # Ensure the artifact name matches exactly
-          path: coverage/  # Download to coverage/ directory
-
       - name: Run Acceptance Tests with Coverage
         run: |
-          mkdir -p coverage/  # Create a directory on the host for coverage files
-          docker run --rm --network host -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
+          docker run --rm --network host -e PYTHONPATH=/app fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
+
+      - name: Download Unit Test Coverage Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-report
+          path: coverage/
 
       - name: Combine Coverage Reports
         run: |
