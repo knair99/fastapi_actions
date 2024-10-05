@@ -29,8 +29,8 @@ jobs:
           # Running the container and ensuring coverage files are generated
           docker run --rm \
             -e PYTHONPATH=/app \
-            -v ${{ github.workspace }}/htmlcov:/app/htmlcov \  # Ensure the htmlcov/ directory is mounted correctly
-            -v ${{ github.workspace }}/coverage.xml:/app/coverage.xml \  # Ensure the coverage.xml file is mounted
+            -v ${{ github.workspace }}/htmlcov:/app/htmlcov \
+            -v ${{ github.workspace }}/coverage.xml:/app/coverage.xml \
             fastapi-app poetry run pytest --cov=app --cov-report=xml --cov-report=html tests/test_unit.py
 
       - name: Upload Coverage Report to Codecov
