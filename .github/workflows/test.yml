@@ -71,6 +71,11 @@ jobs:
             sleep 5
           done
 
+      - name: Create coverage directory and set permissions
+        run: |
+          mkdir -p coverage/
+          sudo chmod -R 777 coverage/
+
       - name: Run Acceptance Tests with Coverage
         run: |
           docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
