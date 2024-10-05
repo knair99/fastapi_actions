@@ -36,14 +36,14 @@ jobs:
         with:
           files: /app/coverage/coverage.xml  # Path to coverage report
           flags: unittests  # Optional flag to label this report in Codecov
-          name: codecov-coverage-report  # Name for the Codecov report
+          name: unit-test-coverage-report  # Name for the Codecov report
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the token in GitHub Secrets
 
       - name: Publish Coverage Report as an Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: unit-test-coverage-report
           path: ./coverage/html/  # Upload the entire HTML coverage report
 
   acceptance-tests:
