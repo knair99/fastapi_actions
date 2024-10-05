@@ -1,14 +1,3 @@
-name: CI Tests
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-  workflow_dispatch:
-
 jobs:
   unit-tests:
     name: Run Unit Tests
@@ -29,27 +18,19 @@ jobs:
           docker run --rm \
             -e PYTHONPATH=/app \
             -v ${{ github.workspace }}/coverage:/app/coverage \
-            fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage.xml --cov-report=html:/app/coverage/html tests/test_unit.py
+            fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-unit.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_unit.py
+          mv /app/.coverage /app/coverage/.coverage.unit
 
-      - name: Upload Coverage Report to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: coverage/coverage.xml  # Path to coverage report
-          flags: unittests  # Optional flag to label this report in Codecov
-          name: unit-test-coverage-report  # Name for the Codecov report
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the token in GitHub Secrets
-
-      - name: Publish Coverage Report as an Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Unit Test Coverage Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage-report
-          path: coverage/html/  # Upload the entire HTML coverage report
+          path: coverage/
 
   acceptance-tests:
     name: Run Acceptance Tests
     runs-on: ubuntu-latest
-    needs: unit-tests  # Make sure this job waits for unit-tests to complete
+    needs: unit-tests
 
     steps:
       - name: Checkout code
@@ -71,29 +52,20 @@ jobs:
             sleep 5
           done
 
-      - name: Create coverage directory and set permissions
-        run: |
-          mkdir -p coverage/
-          sudo chmod -R 777 coverage/
-
       - name: Run Acceptance Tests with Coverage
         run: |
-          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
-
-      - name: Download Unit Test Coverage Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: unit-test-coverage-report
-          path: coverage/  # Download to coverage/ directory
+          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_acceptance.py
+          mv /app/.coverage /app/coverage/.coverage.acceptance
 
       - name: Combine Coverage Reports
         run: |
-          docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage combine /app/coverage
+          docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage combine /app/coverage/.coverage.unit /app/coverage/.coverage.acceptance
+          docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage xml -o /app/coverage/coverage.xml
 
       - name: Upload Combined Coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage/coverage.xml
+          files: ./coverage/coverage.xml
           flags: merged-coverage
           name: merged-coverage-report
         env:
