@@ -16,7 +16,6 @@ services:
     depends_on:
       - db
 
-  # Optional, if you have a database service
   db:
     image: postgres:13
     container_name: fastapi-db
