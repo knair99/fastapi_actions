@@ -17,44 +17,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
+      - name: Build Docker image
+        run: docker build -t fastapi-app .
 
-      - name: Run Unit Tests
-        env:
-          PYTHONPATH: .
-        run: |
-          poetry run pytest tests/test_unit.py
+      - name: Run Unit Tests inside Docker
+        run: docker run --rm fastapi-app poetry run pytest tests/test_unit.py
 
   acceptance-tests:
     name: Run Acceptance Tests
     runs-on: ubuntu-latest
 
+    services:
+      docker:
+        image: docker:20.10.7
+        options: --privileged
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-      - name: Install dependencies
+      - name: Build Docker image
+        run: docker build -t fastapi-app .
+
+      - name: Run Docker container
+        run: docker run -d -p 8000:8000 --name fastapi-container fastapi-app
+
+      - name: Wait for container to be ready
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
+          until curl -s http://localhost:8000/docs; do
+            echo "Waiting for FastAPI to start..."
+            sleep 5
+          done
 
       - name: Run Acceptance Tests
-        env:
-          PYTHONPATH: .
-        run: |
-          poetry run pytest tests/test_acceptance.py
+        run: docker run --rm --network host fastapi-app poetry run pytest tests/test_acceptance.py
