@@ -28,6 +28,7 @@ jobs:
         run: |
           docker run --rm \
             -e PYTHONPATH=/app \
+            -v ${{ github.workspace }}/coverage:/app/coverage \
             fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage.xml --cov-report=html:/app/coverage/html tests/test_unit.py
 
       - name: Upload Coverage Report to Codecov
@@ -43,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: /app/coverage/html/  # Upload the entire HTML coverage report
+          path: ./coverage/html/  # Upload the entire HTML coverage report
 
   acceptance-tests:
     name: Run Acceptance Tests
