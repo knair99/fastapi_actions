@@ -1,3 +1,14 @@
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
 jobs:
   unit-tests:
     name: Run Unit Tests
