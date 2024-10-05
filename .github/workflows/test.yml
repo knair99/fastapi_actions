@@ -26,28 +26,24 @@ jobs:
 
       - name: Run Unit Tests inside Docker with coverage
         run: |
-          # Running the container and ensuring coverage files are generated
           docker run --rm \
             -e PYTHONPATH=/app \
-            -v ${{ github.workspace }}/htmlcov:/app/htmlcov \
-            -v ${{ github.workspace }}/coverage.xml:/app/coverage.xml \
-            fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage.xml --cov-report=html:/app/htmlcov tests/test_unit.py
+            fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage.xml --cov-report=html:/app/coverage/html tests/test_unit.py
 
       - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.xml  # Path to the coverage.xml file
-          flags: unittests  # Label this coverage report as "unittests"
-          name: codecov-coverage-report  # Name for the report in Codecov
+          files: /app/coverage/coverage.xml  # Path to coverage report
+          flags: unittests  # Optional flag to label this report in Codecov
+          name: codecov-coverage-report  # Name for the Codecov report
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the Codecov token from GitHub Secrets
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the token in GitHub Secrets
 
       - name: Publish Coverage Report as an Artifact
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: htmlcov/  # Upload the entire HTML coverage report as an artifact
-
+          path: /app/coverage/html/  # Upload the entire HTML coverage report
 
   acceptance-tests:
     name: Run Acceptance Tests
