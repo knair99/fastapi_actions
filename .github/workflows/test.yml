@@ -34,17 +34,17 @@ jobs:
       - name: Upload Coverage Report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: /app/coverage/coverage.xml  # Path to coverage report
+          files: coverage/coverage.xml  # Path to coverage report
           flags: unittests  # Optional flag to label this report in Codecov
           name: unit-test-coverage-report  # Name for the Codecov report
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}  # Set the token in GitHub Secrets
 
       - name: Publish Coverage Report as an Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: unit-test-coverage-report
-          path: ./coverage/html/  # Upload the entire HTML coverage report
+          path: coverage/html/  # Upload the entire HTML coverage report
 
   acceptance-tests:
     name: Run Acceptance Tests
@@ -73,13 +73,13 @@ jobs:
 
       - name: Run Acceptance Tests with Coverage
         run: |
-          docker run --rm --network host -e PYTHONPATH=/app fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
+          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
 
       - name: Download Unit Test Coverage Artifact
         uses: actions/download-artifact@v3
         with:
           name: unit-test-coverage-report
-          path: coverage/
+          path: coverage/  # Download to coverage/ directory
 
       - name: Combine Coverage Reports
         run: |
@@ -88,7 +88,7 @@ jobs:
       - name: Upload Combined Coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./coverage/coverage.xml
+          files: coverage/coverage.xml
           flags: merged-coverage
           name: merged-coverage-report
         env:
