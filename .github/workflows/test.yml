@@ -50,11 +50,6 @@ jobs:
     name: Run Acceptance Tests
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:20.10.7
-        options: --privileged
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -68,15 +63,41 @@ jobs:
       - name: Run Docker container
         run: docker run -d -p 8000:8000 --name fastapi-container fastapi-app
 
-      - name: Wait for container to be ready
+      - name: Wait for FastAPI to be ready
         run: |
           until curl -s http://localhost:8000/docs; do
             echo "Waiting for FastAPI to start..."
             sleep 5
           done
 
-      - name: Run Acceptance Tests
-        env:
-          PYTHONPATH: /app  # Set PYTHONPATH as environment variable
-        run: docker run --rm --network host -e PYTHONPATH=/app fastapi-app poetry run pytest tests/test_acceptance.py
+      - name: Run Acceptance Tests with Coverage
+        run: |
+          docker run --rm --network host -e PYTHONPATH=/app fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
 
+      - name: Download Unit Test Coverage Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-report
+          path: coverage/
+
+      - name: Combine Coverage Reports
+        run: |
+          docker run --rm -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run coverage combine /app/coverage
+
+      - name: Upload Combined Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage.xml
+          flags: merged-coverage
+          name: merged-coverage-report
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Publish Combined Coverage Report as an Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: merged-coverage-report
+          path: coverage/html/
+
+      - name: Tear Down Docker Container
+        run: docker stop fastapi-container && docker rm fastapi-container
