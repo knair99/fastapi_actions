@@ -24,6 +24,8 @@ jobs:
         run: docker build -t fastapi-app .
 
       - name: Run Unit Tests inside Docker
+        env:
+          PYTHONPATH: /app  # Set PYTHONPATH as environment variable
         run: docker run --rm fastapi-app poetry run pytest tests/test_unit.py
 
   acceptance-tests:
@@ -56,4 +58,7 @@ jobs:
           done
 
       - name: Run Acceptance Tests
+        env:
+          PYTHONPATH: /app  # Set PYTHONPATH as environment variable
         run: docker run --rm --network host fastapi-app poetry run pytest tests/test_acceptance.py
+
