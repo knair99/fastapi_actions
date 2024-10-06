@@ -1,5 +1,9 @@
 name: CI Tests
 
+permissions:
+  pull-requests: write
+  contents: read  # For reading repository contents
+
 on:
   push:
     branches:
