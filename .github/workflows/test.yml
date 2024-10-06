@@ -56,7 +56,6 @@ jobs:
   acceptance-tests:
     name: Run Acceptance Tests
     runs-on: ubuntu-latest
-    needs: unit-tests
 
     services:
       docker:
@@ -111,3 +110,53 @@ jobs:
 
       - name: Tear Down Docker Container
         run: docker stop fastapi-container && docker rm fastapi-container
+
+  sonarqube-analysis:
+    name: Run SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: [ unit-tests, acceptance-tests ]  # Make sure SonarQube waits for both test jobs to finish
+
+    services:
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        options: >
+          --health-cmd='curl -f http://localhost:9000/api/system/health || exit 1' 
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Wait for SonarQube to be ready
+        run: |
+          echo "Waiting for SonarQube to start..."
+          sleep 60  # Adjust the sleep time based on your SonarQube startup time
+
+      - name: Download Unit Test Coverage Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-coverage-report
+          path: coverage/
+
+      - name: Download Acceptance Test Coverage Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: acceptance-test-coverage-report
+          path: coverage/
+
+      - name: Run SonarQube Scanner
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/usr/src \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.projectKey=my_project_key \
+            -Dsonar.sources=./app \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=admin \
+            -Dsonar.password=admin \
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml,coverage/coverage-acceptance.xml \
+            -Dsonar.qualitygate.wait=true
