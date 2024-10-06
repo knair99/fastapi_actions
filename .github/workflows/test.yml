@@ -122,7 +122,7 @@ jobs:
         ports:
           - 9000:9000
         options: >
-          --health-cmd='curl --silent --fail http://localhost:9000/api/system/health || exit 1' 
+          --health-cmd='curl http://localhost:9000/api/system/health || exit 1' 
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
