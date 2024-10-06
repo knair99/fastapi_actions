@@ -94,25 +94,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8  # Install Flake8 or use the package manager of your project
 
-      - name: Get list of changed Python files
-        id: changed-files
+      - name: Filter Python Files
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            python:
+              - '*.py'          # For top-level Python files
+              - '**/*.py'       # For Python files in any subdirectory
+
+      - name: Run Flake8 on Changed Python Files
+        if: steps.filter.outputs.python == 'true'
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} -- '*.py' > changed_files.txt
-          echo "::set-output name=files::$(cat changed_files.txt | tr '\n' ' ')"
-
-      - name: Run Flake8 on changed files
-        run: |
-          if [ -s changed_files.txt ]; then
-            flake8 $(cat changed_files.txt) --output-file=flake8-report.txt --exit-zero
-          else
-            echo "No Python files changed."
+          git diff origin/${{ github.event.pull_request.base.ref }} -- '*.py' > diff.txt
+          flake8 --diff > flake8-report.txt
         continue-on-error: true
-
-      - name: Run Flake8
-        run: |
-          flake8 . --output-file=flake8-report.txt  --exit-zero  # This runs Flake8 on your codebase and ensures it does not fail the build
-        continue-on-error: true  # Continue workflow even if Flake8 reports issues
 
       - name: Annotate PR with Flake8 results
         if: always()  # Ensure the next step always runs
