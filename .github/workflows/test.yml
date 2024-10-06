@@ -39,12 +39,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Save Docker image as artifact
+        run: |
+          docker save fastapi-app | gzip > fastapi-app.tar.gz
+
+      - name: Upload Docker image artifact
         uses: actions/upload-artifact@v3
         with:
           name: fastapi-app-image
           path: fastapi-app.tar.gz
-        run: |
-          docker save fastapi-app | gzip > fastapi-app.tar.gz
 
       - name: Run Unit Tests inside Docker with coverage
         run: |
