@@ -107,12 +107,11 @@ jobs:
         if: steps.filter.outputs.python == 'true'
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff origin/${{ github.event.pull_request.base.ref }} -- '*.py' > diff.txt
-          flake8 --diff > flake8-report.txt
+          changed_files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} -- '*.py')
+          echo "$changed_files" | xargs flake8 > flake8-report.txt || true  # Run flake8 on the whole changed files
         continue-on-error: true  # Continue workflow even if there are Flake8 issues
 
       - name: Check if Flake8 Report is Created
-        if: steps.filter.outputs.python == 'true'
         run: |
           if [ -s flake8-report.txt ]; then
             echo "Flake8 report exists"
