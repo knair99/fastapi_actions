@@ -18,8 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -39,12 +39,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Save Docker image as artifact
-        run: |
-          docker save fastapi-app | gzip > fastapi-app.tar.gz
         uses: actions/upload-artifact@v3
         with:
           name: fastapi-app-image
           path: fastapi-app.tar.gz
+        run: |
+          docker save fastapi-app | gzip > fastapi-app.tar.gz
 
       - name: Run Unit Tests inside Docker with coverage
         run: |
@@ -82,8 +82,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Download Docker image artifact
         uses: actions/download-artifact@v3
