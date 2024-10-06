@@ -107,18 +107,6 @@ jobs:
             exit 1
           fi
 
-      - name: Download Unit Test Coverage Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: unit-test-coverage-report
-          path: ./coverage/
-
-      - name: Download Acceptance Test Coverage Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: acceptance-test-coverage-report
-          path: ./coverage/
-
       - name: Run SonarQube Scanner
         run: |
           docker run --rm \
@@ -129,5 +117,10 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
             -Dsonar.password=admin \
-            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml,coverage/coverage-acceptance.xml \
             -Dsonar.qualitygate.wait=true
+
+      - name: Upload SonarQube Analysis Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-analysis-report
+          path: path/to/sonar-report.json  # Or .xml, depending on the report format
