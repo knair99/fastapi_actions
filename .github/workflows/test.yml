@@ -75,7 +75,24 @@ jobs:
             sleep 5
           done
 
-      - name: Run Acceptance Tests
+      - name: Run Acceptance Tests with Coverage
+        run: |
+          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_acceptance.py
+
+      - name: Upload Acceptance Test Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-coverage-report
+          path: coverage/
+
+      - name: Upload Acceptance Test Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-acceptance.xml
+          flags: acceptancetests
+          name: acceptance-test-coverage
         env:
-          PYTHONPATH: /app  # Set PYTHONPATH as environment variable
-        run: docker run --rm --network host -e PYTHONPATH=/app fastapi-app poetry run pytest tests/test_acceptance.py
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Tear Down Docker Container
+        run: docker stop fastapi-container && docker rm fastapi-container
