@@ -9,6 +9,7 @@ tasks = []
 
 @app.get("/tasks", response_model=List[Task])
 async def get_tasks():
+    # Return all tasks
     return tasks
 
 @app.post("/tasks", response_model=Task)
