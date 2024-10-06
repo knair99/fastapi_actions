@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import List
 from .models import Task
+from typing import Dict
 
 app = FastAPI()
 
@@ -9,6 +10,7 @@ tasks = []
 
 @app.get("/tasks", response_model=List[Task])
 async def get_tasks():
+    # Return all tasks
     return tasks
 
 @app.post("/tasks", response_model=Task)
