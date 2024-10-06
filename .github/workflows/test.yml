@@ -92,7 +92,7 @@ jobs:
 
       - name: Run Flake8
         run: |
-          flake8 . --exit-zero  # This runs Flake8 on your codebase and ensures it does not fail the build
+          flake8 . --output-file=flake8-report.txt  --exit-zero  # This runs Flake8 on your codebase and ensures it does not fail the build
         continue-on-error: true  # Continue workflow even if Flake8 reports issues
 
       - name: Annotate PR with Flake8 results
@@ -109,3 +109,5 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           path: flake8-report.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
