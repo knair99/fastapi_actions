@@ -94,6 +94,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8  # Install Flake8 or use the package manager of your project
 
+      - name: Get list of changed Python files
+        id: changed-files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} -- '*.py' > changed_files.txt
+          echo "::set-output name=files::$(cat changed_files.txt | tr '\n' ' ')"
+
+      - name: Run Flake8 on changed files
+        run: |
+          if [ -s changed_files.txt ]; then
+            flake8 $(cat changed_files.txt) --output-file=flake8-report.txt --exit-zero
+          else
+            echo "No Python files changed."
+        continue-on-error: true
+
       - name: Run Flake8
         run: |
           flake8 . --output-file=flake8-report.txt  --exit-zero  # This runs Flake8 on your codebase and ensures it does not fail the build
