@@ -30,10 +30,13 @@ jobs:
             ${{ runner.os }}-docker-
 
       - name: Build Docker image with cache
-        run: |
-          docker build --cache-from=type=local,src=/tmp/.buildx-cache \
-                       --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max \
-                       -t fastapi-app .
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          tags: fastapi-app
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run Unit Tests inside Docker with coverage
         run: |
@@ -83,10 +86,13 @@ jobs:
             ${{ runner.os }}-docker-
 
       - name: Build Docker image with cache
-        run: |
-          docker build --cache-from=type=local,src=/tmp/.buildx-cache \
-                       --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max \
-                       -t fastapi-app .
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          tags: fastapi-app
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run Docker container
         run: docker run -d -p 8000:8000 --name fastapi-container fastapi-app
