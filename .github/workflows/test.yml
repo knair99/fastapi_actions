@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Acceptance Tests with Coverage
         run: |
-          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html --cov-config=/app/.coveragerc tests/test_acceptance.py
+          docker run --rm --network host -e PYTHONPATH=/app -v ${{ github.workspace }}/coverage:/app/coverage fastapi-app poetry run pytest --cov=app --cov-report=xml:/app/coverage/coverage-acceptance.xml --cov-report=html:/app/coverage/html tests/test_acceptance.py
 
       - name: Upload Acceptance Test Coverage Artifact
         uses: actions/upload-artifact@v4
